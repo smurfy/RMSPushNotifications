@@ -1,17 +1,17 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Tests\Message;
+namespace RMS\PushNotifications\Tests\Message;
 
-use RMS\PushNotificationsBundle\Device\Types,
-    RMS\PushNotificationsBundle\Message\WindowsphoneMessage,
-    RMS\PushNotificationsBundle\Message\MessageInterface;
+use RMS\PushNotifications\Device\Types,
+    RMS\PushNotifications\Message\WindowsphoneMessage,
+    RMS\PushNotifications\Message\MessageInterface;
 
 class WindowsphoneMessageTest extends \PHPUnit_Framework_TestCase
 {
     public function testCreation()
     {
         $msg = new WindowsphoneMessage();
-        $this->assertInstanceOf("RMS\PushNotificationsBundle\Message\MessageInterface", $msg);
+        $this->assertInstanceOf("RMS\PushNotifications\Message\MessageInterface", $msg);
         $this->assertEquals(Types::OS_WINDOWSPHONE, $msg->getTargetOS());
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Message;
+namespace RMS\PushNotifications\Message;
 
 class AppleMessage implements MessageInterface
 {

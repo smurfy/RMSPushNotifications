@@ -1,17 +1,15 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Service\OS;
+namespace RMS\PushNotifications\Handlers;
 
 use Psr\Log\LoggerInterface;
-use RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException;
-use RMS\PushNotificationsBundle\Message\WindowsMessage;
-use RMS\PushNotificationsBundle\Message\WindowsphoneMessage;
-use RMS\PushNotificationsBundle\Message\MessageInterface;
+use RMS\PushNotifications\Exception\InvalidMessageTypeException;
+use RMS\PushNotifications\Message\WindowsMessage;
+use RMS\PushNotifications\Message\MessageInterface;
 use Buzz\Browser,
     Buzz\Client\Curl;
-use RMS\PushNotificationsBundle\Service\EventListener;
 
-class WindowsNotification implements OSNotificationServiceInterface
+class WindowsNotificationHandler implements NotificationHandlerInterface
 {
     /**
      * Browser object
@@ -21,7 +19,7 @@ class WindowsNotification implements OSNotificationServiceInterface
     protected $browser;
 
     /**
-     * Monolog logger
+     * PSR Compatible logger
      *
      * @var LoggerInterface
      */
@@ -53,16 +51,22 @@ class WindowsNotification implements OSNotificationServiceInterface
      * @param $sid
      * @param string
      * @param $timeout
-     * @param LoggerInterface $logger
      */
-    public function __construct($sid, $secret, $timeout, $cachedir = "", EventListener $eventListener = null, $logger = null)
+    public function __construct($sid, $secret, $timeout)
     {
         $this->browser = new Browser(new Curl());
         $this->browser->getClient()->setVerifyPeer(false);
         $this->browser->getClient()->setTimeout($timeout);
-        $this->logger = $logger;
         $this->sid = $sid;
         $this->secret = $secret;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
     }
 
     protected function getAccessToken()
@@ -110,6 +114,10 @@ class WindowsNotification implements OSNotificationServiceInterface
         return $tile;
     }
 
+    /**
+     * @param MessageInterface $message
+     * @return bool
+     */
     public function send(MessageInterface $message)
     {
         if (!$message instanceof WindowsMessage) {
@@ -149,16 +157,21 @@ class WindowsNotification implements OSNotificationServiceInterface
 
         $code = $response['http_code'];
         if ($code == 200) {
-            $this->logger->info("Message sent successfully");
+            if ($this->logger) {
+                $this->logger->info("Message sent successfully");
+            }
             return true;
         } else if ($code == 401) {
             $this->accessToken = '';
-            $this->logger->error($code);
+            if ($this->logger) {
+                $this->logger->error($code);
+            }
             return false;
         } else {
-            $this->logger->error($code);
+            if ($this->logger) {
+                $this->logger->error($code);
+            }
             return false;
         }
-
     }
 }

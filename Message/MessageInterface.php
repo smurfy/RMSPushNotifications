@@ -1,6 +1,6 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Message;
+namespace RMS\PushNotifications\Message;
 
 interface MessageInterface
 {

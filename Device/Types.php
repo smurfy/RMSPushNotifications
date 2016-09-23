@@ -1,6 +1,6 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Device;
+namespace RMS\PushNotifications\Device;
 
 class Types
 {

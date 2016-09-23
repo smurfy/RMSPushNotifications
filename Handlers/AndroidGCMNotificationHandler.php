@@ -1,17 +1,17 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Service\OS;
+namespace RMS\PushNotifications\Handlers;
 
 use Psr\Log\LoggerInterface;
-use RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException,
-    RMS\PushNotificationsBundle\Message\AndroidMessage,
-    RMS\PushNotificationsBundle\Message\MessageInterface;
+use RMS\PushNotifications\Exception\InvalidMessageTypeException,
+    RMS\PushNotifications\Message\AndroidMessage,
+    RMS\PushNotifications\Message\MessageInterface;
 use Buzz\Browser,
     Buzz\Client\AbstractCurl,
     Buzz\Client\Curl,
     Buzz\Client\MultiCurl;
 
-class AndroidGCMNotification implements OSNotificationServiceInterface
+class AndroidGCMNotificationHandler implements NotificationHandlerInterface
 {
 
     /**
@@ -57,7 +57,7 @@ class AndroidGCMNotification implements OSNotificationServiceInterface
     protected $responses;
 
     /**
-     * Monolog logger
+     * PSR3 Compatible logger
      *
      * @var LoggerInterface
      */
@@ -69,11 +69,10 @@ class AndroidGCMNotification implements OSNotificationServiceInterface
      * @param string       $apiKey
      * @param bool         $useMultiCurl
      * @param int          $timeout
-     * @param LoggerInterface $logger
      * @param AbstractCurl $client (optional)
      * @param bool         $dryRun
      */
-    public function __construct($apiKey, $useMultiCurl, $timeout, $logger, AbstractCurl $client = null, $dryRun = false)
+    public function __construct($apiKey, $useMultiCurl, $timeout, AbstractCurl $client = null, $dryRun = false)
     {
         $this->useDryRun = $dryRun;
         $this->apiKey = $apiKey;
@@ -84,14 +83,21 @@ class AndroidGCMNotification implements OSNotificationServiceInterface
 
         $this->browser = new Browser($client);
         $this->browser->getClient()->setVerifyPeer(false);
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
         $this->logger = $logger;
     }
 
     /**
      * Sends the data to the given registration IDs via the GCM server
      *
-     * @param  \RMS\PushNotificationsBundle\Message\MessageInterface              $message
-     * @throws \RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException
+     * @param  \RMS\PushNotifications\Message\MessageInterface              $message
+     * @throws \RMS\PushNotifications\Exception\InvalidMessageTypeException
      * @return bool
      */
     public function send(MessageInterface $message)
@@ -144,11 +150,15 @@ class AndroidGCMNotification implements OSNotificationServiceInterface
             $message = json_decode($response->getContent());
             if ($message === null || $message->success == 0 || $message->failure > 0) {
                 if ($message == null) {
-                    $this->logger->error($response->getContent());
+                    if ($this->logger) {
+                        $this->logger->error($response->getContent());
+                    }
                 } else {
                     foreach ($message->results as $result) {
                         if (isset($result->error)) {
-                            $this->logger->error($result->error);
+                            if ($this->logger) {
+                                $this->logger->error($result->error);
+                            }
                         }
                     }
                 }

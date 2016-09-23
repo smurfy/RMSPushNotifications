@@ -1,16 +1,13 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Service\OS;
+namespace RMS\PushNotifications\Handlers;
 
 use Psr\Log\LoggerInterface;
-use RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException,
-    RMS\PushNotificationsBundle\Message\AppleMessage,
-    RMS\PushNotificationsBundle\Message\MessageInterface,
-    Symfony\Component\Filesystem\Filesystem,
-    RMS\PushNotificationsBundle\Service\EventListenerInterface;
-use RMS\PushNotificationsBundle\Service\EventListener;
+use RMS\PushNotifications\Exception\InvalidMessageTypeException,
+    RMS\PushNotifications\Message\AppleMessage,
+    RMS\PushNotifications\Message\MessageInterface;
 
-class AppleNotification implements OSNotificationServiceInterface, EventListenerInterface
+class AppleNotificationHandler implements NotificationHandlerInterface
 {
 
     /**
@@ -33,20 +30,6 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
      * @var string
      */
     protected $passphrase;
-
-    /**
-     * Content of PEM
-     *
-     * @var string
-     */
-    protected $pemContent;
-
-    /**
-     * Passphrase for PEM content
-     *
-     * @var string
-     */
-    protected $pemContentPassphrase;
 
     /**
      * Array for streams to APN
@@ -98,7 +81,7 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
     protected $cachedir;
 
     /**
-     * Monolog logger
+     * PSR3 Compatible logger
      *
      * @var LoggerInterface
      */
@@ -123,10 +106,8 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
      * @param bool          $jsonUnescapedUnicode
      * @param int           $timeout
      * @param string        $cachedir
-     * @param EventListener $eventListener
-     * @param LoggerInterface $logger
      */
-    public function __construct($sandbox, $pem, $passphrase = "", $jsonUnescapedUnicode = FALSE, $timeout = 60, $cachedir = "", EventListener $eventListener = null, $logger = null)
+    public function __construct($sandbox, $pem, $passphrase = "", $jsonUnescapedUnicode = FALSE, $timeout = 60, $cachedir = "")
     {
         $this->useSandbox = $sandbox;
         $this->pemPath = $pem;
@@ -137,11 +118,14 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
         $this->jsonUnescapedUnicode = $jsonUnescapedUnicode;
         $this->timeout = $timeout;
         $this->cachedir = $cachedir;
-        $this->logger = $logger;
+    }
 
-        if ($eventListener != null) {
-            $eventListener->addListener($this);
-        }
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
     }
 
     /**
@@ -159,9 +143,9 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
     /**
      * Send a MDM or notification message
      *
-     * @param  \RMS\PushNotificationsBundle\Message\MessageInterface|\RMS\PushNotificationsBundle\Service\OS\MessageInterface $message
+     * @param  \RMS\PushNotifications\Message\MessageInterface|\RMS\PushNotifications\Service\OS\MessageInterface $message
      * @throws \RuntimeException
-     * @throws \RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException
+     * @throws \RMS\PushNotifications\Exception\InvalidMessageTypeException
      * @return bool
      */
     public function send(MessageInterface $message)
@@ -202,7 +186,7 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
      * @param  int                                                                $firstMessageId
      * @param  string                                                             $apnURL
      * @throws \RuntimeException
-     * @throws \RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException
+     * @throws \RMS\PushNotifications\Exception\InvalidMessageTypeException
      * @return int
      */
     protected function sendMessages($firstMessageId, $apnURL)
@@ -318,19 +302,6 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
         $pem = $this->pemPath;
         $passphrase = $this->passphrase;
 
-        // Create cache pem file if needed
-        if (!empty($this->pemContent)) {
-            $filename = $this->cachedir . self::APNS_CERTIFICATE_FILE;
-
-            $fs = new Filesystem();
-            $fs->mkdir(dirname($filename));
-            file_put_contents($filename, $this->pemContent);
-
-            // Now we use this file as pem
-            $pem = $filename;
-            $passphrase = $this->pemContentPassphrase;
-        }
-
         $ctx = stream_context_create();
         stream_context_set_option($ctx, "ssl", "local_cert", $pem);
         if (strlen($passphrase)) {
@@ -413,33 +384,5 @@ class AppleNotification implements OSNotificationServiceInterface, EventListener
     public function getResponses()
     {
         return $this->responses;
-    }
-
-    /**
-     * @param $pemContent
-     * @param $passphrase
-     */
-    public function setPemAsString($pemContent, $passphrase) {
-        $this->pemContent = $pemContent;
-        $this->pemContentPassphrase = $passphrase;
-    }
-
-    /**
-     * Called on kernel terminate
-     */
-    public function onKernelTerminate() {
-
-        // Remove cache pem file
-        $fs = new Filesystem();
-        $filename = $this->cachedir . self::APNS_CERTIFICATE_FILE;
-        if ($fs->exists(dirname($filename))) {
-            $fs->remove(dirname($filename));
-        }
-
-        // Close streams
-        foreach ($this->apnStreams as $stream) {
-            fclose($stream);
-        }
-
     }
 }

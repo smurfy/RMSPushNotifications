@@ -1,8 +1,8 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Message;
+namespace RMS\PushNotifications\Message;
 
-use RMS\PushNotificationsBundle\Device\Types;
+use RMS\PushNotifications\Device\Types;
 
 class MacMessage extends AppleMessage
 {

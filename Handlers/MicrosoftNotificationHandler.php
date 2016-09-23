@@ -1,15 +1,15 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Service\OS;
+namespace RMS\PushNotifications\Handlers;
 
 use Psr\Log\LoggerInterface;
-use RMS\PushNotificationsBundle\Exception\InvalidMessageTypeException;
-use RMS\PushNotificationsBundle\Message\WindowsphoneMessage;
-use RMS\PushNotificationsBundle\Message\MessageInterface;
+use RMS\PushNotifications\Exception\InvalidMessageTypeException;
+use RMS\PushNotifications\Message\WindowsphoneMessage;
+use RMS\PushNotifications\Message\MessageInterface;
 use Buzz\Browser,
     Buzz\Client\Curl;
 
-class MicrosoftNotification implements OSNotificationServiceInterface
+class MicrosoftNotificationHandler implements NotificationHandlerInterface
 {
     /**
      * Browser object
@@ -19,7 +19,7 @@ class MicrosoftNotification implements OSNotificationServiceInterface
     protected $browser;
 
     /**
-     * Monolog logger
+     * PSR3 Compatible logger
      *
      * @var LoggerInterface
      */
@@ -27,16 +27,26 @@ class MicrosoftNotification implements OSNotificationServiceInterface
 
     /**
      * @param $timeout
-     * @param $logger
      */
-    public function __construct($timeout, $logger)
+    public function __construct($timeout)
     {
         $this->browser = new Browser(new Curl());
         $this->browser->getClient()->setVerifyPeer(false);
         $this->browser->getClient()->setTimeout($timeout);
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
         $this->logger = $logger;
     }
 
+    /**
+     * @param MessageInterface $message
+     * @return bool
+     */
     public function send(MessageInterface $message)
     {
         if (!$message instanceof WindowsphoneMessage) {
@@ -62,7 +72,9 @@ class MicrosoftNotification implements OSNotificationServiceInterface
         $response = $this->browser->post($message->getDeviceIdentifier(), $headers, $xml->asXML());
 
         if (!$response->isSuccessful()) {
-            $this->logger->error($response->getStatusCode(). ' : '. $response->getReasonPhrase());
+            if ($this->logger) {
+                $this->logger->error($response->getStatusCode() . ' : ' . $response->getReasonPhrase());
+            }
         }
 
         return $response->isSuccessful();

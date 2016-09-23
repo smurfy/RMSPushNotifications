@@ -1,6 +1,6 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Device\iOS;
+namespace RMS\PushNotifications\Device\iOS;
 
 class Feedback
 {
@@ -12,7 +12,7 @@ class Feedback
      * Unpacks the APNS data into the required fields
      *
      * @param $data
-     * @return \RMS\PushNotificationsBundle\Device\iOS\Feedback
+     * @return \RMS\PushNotifications\Device\iOS\Feedback
      */
     public function unpack($data)
     {

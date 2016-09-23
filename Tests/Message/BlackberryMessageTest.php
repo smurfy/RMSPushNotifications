@@ -1,17 +1,17 @@
 <?php
 
-namespace RMS\PushNotificationsBundle\Tests\Message;
+namespace RMS\PushNotifications\Tests\Message;
 
-use RMS\PushNotificationsBundle\Device\Types,
-    RMS\PushNotificationsBundle\Message\BlackberryMessage,
-    RMS\PushNotificationsBundle\Message\MessageInterface;
+use RMS\PushNotifications\Device\Types,
+    RMS\PushNotifications\Message\BlackberryMessage,
+    RMS\PushNotifications\Message\MessageInterface;
 
 class BlackberryMessageTest extends \PHPUnit_Framework_TestCase
 {
     public function testCreation()
     {
         $msg = new BlackberryMessage();
-        $this->assertInstanceOf("RMS\PushNotificationsBundle\Message\MessageInterface", $msg);
+        $this->assertInstanceOf("RMS\PushNotifications\Message\MessageInterface", $msg);
         $this->assertEquals(Types::OS_BLACKBERRY, $msg->getTargetOS());
     }
 

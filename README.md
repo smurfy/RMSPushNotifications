@@ -1,6 +1,6 @@
-# RMSPushNotificationsBundle ![](https://secure.travis-ci.org/richsage/RMSPushNotificationsBundle.png)
+# RMSPushNotifications ![](https://secure.travis-ci.org/richsage/RMSPushNotifications.png)
 
-A bundle to allow sending of push notifications to mobile devices.  Currently supports Android (C2DM, GCM, FCM), Blackberry and iOS devices.
+A Library to allow sending of push notifications to mobile devices.  Currently supports Android (C2DM, GCM, FCM), Blackberry and iOS devices.
 
 ## Installation
 
@@ -13,85 +13,28 @@ To use this bundle in your Symfony2 project add the following to your `composer.
         }
     }
 
-and enable it in your kernel:
-
-    <?php
-    // app/AppKernel.php
-
-    public function registerBundles()
-    {
-        $bundles = array(
-            // ...
-            new RMS\PushNotificationsBundle\RMSPushNotificationsBundle(),
-        );
-    }
-
-NOTE: If you are still using Symfony 2.0, please use the `symfony2.0` branch.
-
-## Configuration
-
-Configuration options available are as follows. Note that the specific services will
-only be available if you provide configuration respectively for them.
-
-    rms_push_notifications:
-      android:
-          timeout: 5 # Seconds to wait for connection timeout, default is 5
-          c2dm:
-              username: <string_android_c2dm_username>
-              password: <string_android_c2dm_password>
-              source: <string_android_c2dm_source>
-          gcm:
-              api_key: <string_android_gcm_api_key> # This is titled "Server Key" when creating it
-              use_multi_curl: <boolean_android_gcm_use_multi_curl> # default is true
-              dry_run: <bool_use_gcm_dry_run>
-          fcm:
-              api_key: <string_android_fcm_api_key> # This is titled "Server Key" when creating it
-              use_multi_curl: <boolean_android_fcm_use_multi_curl> # default is true
-      ios:
-          timeout: 60 # Seconds to wait for connection timeout, default is 60
-          sandbox: <bool_use_apns_sandbox>
-          pem: <path_apns_certificate> # can be absolute or relative path (from app directory)
-          passphrase: <string_apns_certificate_passphrase>
-      mac:
-          timeout: 60 # Seconds to wait for connection timeout, default is 60
-          sandbox: <bool_use_apns_sandbox>
-          pem: <path_apns_certificate>
-          passphrase: <string_apns_certificate_passphrase>
-      blackberry:
-          timeout: 5 # Seconds to wait for connection timeout, default is 5
-          evaluation: <bool_bb_evaluation_mode>
-          app_id: <string_bb_app_id>
-          password: <string_bb_password>
-      windowsphone:
-          timeout: 5 # Seconds to wait for connection timeout, default is 5
-      windows:
-          timeout: 5 # Seconds to wait for connection timeout, default is 5
-          sid: # SID (Secure Identifier) as according to your app's entry in the windows dev center
-          secret: # Client secret according to your app's entry in the windows dev center
-
-NOTE: If you are using Windows, you may need to set the Android GCM/FCM `use_multi_curl` flag to false for GCM/FCM messages to be sent correctly.
-
-Timeout defaults are the defaults from prior to the introduction of this configuration value.
-
 ## Usage
 
 A little example of how to push your first message to an iOS device, we'll assume that you've set up the configuration correctly:
 
-    use RMS\PushNotificationsBundle\Message\iOSMessage;
+    use RMS\PushNotifications\Message\iOSMessage;
+    use RMS\PushNotifications\Notification;
+    use RMS\PushNotifications\Handlers\AppleNotificationHandler;
+    use RMS\PushNotifications\Device\Types;
+    
+    // you need to alter the constructor 
+    $appleHandler = new AppleNotificationHandler($sandbox, $pem, $passphrase, $jsonUnescapedUnicode, $timeout, $cachedir);
+    
+    $notification = new Notification();
+    $notification->addHandler(Types::OS_IOS, $appleHandler);
 
-    class PushDemoController extends Controller
-    {
-        public function pushAction()
-        {
-            $message = new iOSMessage();
-            $message->setMessage('Oh my! A push notification!');
-            $message->setDeviceIdentifier('test012fasdf482asdfd63f6d7bc6d4293aedd5fb448fe505eb4asdfef8595a7');
-
-            $this->container->get('rms_push_notifications')->send($message);
-
-            return new Response('Push notification send!');
-        }
-    }
+    $message = new iOSMessage();
+    $message->setMessage('Oh my! A push notification!');
+    $message->setDeviceIdentifier('test012fasdf482asdfd63f6d7bc6d4293aedd5fb448fe505eb4asdfef8595a7');
+    
+    // If you only use one target devicetype you can use the $appleHandler directly
+    $notification->send($message);
+    
 
 The send method will detect the type of message so if you'll pass it an `AndroidMessage` it will automatically send it through the C2DM/GCM servers, and likewise for Mac and Blackberry.
 
@@ -99,7 +42,7 @@ The send method will detect the type of message so if you'll pass it an `Android
 
 Since both C2DM and GCM are still available, the `AndroidMessage` class has a small flag on it to toggle which service to send it to.  Use as follows:
 
-    use RMS\PushNotificationsBundle\Message\AndroidMessage;
+    use RMS\PushNotifications\Message\AndroidMessage;
 
     $message = new AndroidMessage();
     $message->setGCM(true);
@@ -113,10 +56,10 @@ The Apple Push Notification service also exposes a Feedback service where you ca
 
 This service is available within the bundle.  The following code demonstrates how you can retrieve data from the service:
 
-    $feedbackService = $container->get("rms_push_notifications.ios.feedback");
+    $feedbackService = new iOSFeedback($sandbox, $pem, $passphrase, $timeout);
     $uuids = $feedbackService->getDeviceUUIDs();
 
-Here, `$uuids` contains an array of [Feedback](https://github.com/richsage/RMSPushNotificationsBundle/blob/master/Device/iOS/Feedback.php) objects, with timestamp, token length and the device UUID all populated.
+Here, `$uuids` contains an array of [Feedback](https://github.com/richsage/RMSPushNotifications/blob/master/Device/iOS/Feedback.php) objects, with timestamp, token length and the device UUID all populated.
 
 Apple recommend you poll this service daily.
 
