@@ -74,13 +74,6 @@ class AppleNotificationHandler implements NotificationHandlerInterface
     protected $responses = array();
 
     /**
-     * Cache dir used for cache pem file
-     *
-     * @var string
-     */
-    protected $cachedir;
-
-    /**
      * PSR3 Compatible logger
      *
      * @var LoggerInterface
@@ -107,7 +100,7 @@ class AppleNotificationHandler implements NotificationHandlerInterface
      * @param int           $timeout
      * @param string        $cachedir
      */
-    public function __construct($sandbox, $pem, $passphrase = "", $jsonUnescapedUnicode = FALSE, $timeout = 60, $cachedir = "")
+    public function __construct($sandbox, $pem, $passphrase = "", $jsonUnescapedUnicode = FALSE, $timeout = 60)
     {
         $this->useSandbox = $sandbox;
         $this->pemPath = $pem;
@@ -117,7 +110,6 @@ class AppleNotificationHandler implements NotificationHandlerInterface
         $this->lastMessageId = -1;
         $this->jsonUnescapedUnicode = $jsonUnescapedUnicode;
         $this->timeout = $timeout;
-        $this->cachedir = $cachedir;
     }
 
     /**
@@ -143,7 +135,7 @@ class AppleNotificationHandler implements NotificationHandlerInterface
     /**
      * Send a MDM or notification message
      *
-     * @param  \RMS\PushNotifications\Message\MessageInterface|\RMS\PushNotifications\Service\OS\MessageInterface $message
+     * @param  \RMS\PushNotifications\Message\MessageInterface $message
      * @throws \RuntimeException
      * @throws \RMS\PushNotifications\Exception\InvalidMessageTypeException
      * @return bool

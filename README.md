@@ -23,7 +23,7 @@ A little example of how to push your first message to an iOS device, we'll assum
     use RMS\PushNotifications\Device\Types;
     
     // you need to alter the constructor 
-    $appleHandler = new AppleNotificationHandler($sandbox, $pem, $passphrase, $jsonUnescapedUnicode, $timeout, $cachedir);
+    $appleHandler = new AppleNotificationHandler($sandbox, $pem, $passphrase, $jsonUnescapedUnicode, $timeout);
     
     $notification = new Notification();
     $notification->addHandler(Types::OS_IOS, $appleHandler);
