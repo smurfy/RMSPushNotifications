@@ -164,7 +164,7 @@ class AppleNotificationHandler implements NotificationHandlerInterface
 
             $this->messages[$messageId] = $this->createMdmPayload($message->getToken(), $message->getPushMagicToken());
         } else {
-            $this->messages[$messageId] = $this->createPayload($messageId, $message->getExpiry(), $message->getDeviceIdentifier(), $message->getMessageBody());
+            $this->messages[$messageId] = $this->createPayload($messageId, $message->getExpiry(), $message->getDeviceIdentifier(), $message->getMessageBody(), $message->getPriority());
         }
 
         $errors = $this->sendMessages($messageId, $apnURL);
@@ -316,7 +316,7 @@ class AppleNotificationHandler implements NotificationHandlerInterface
      * @throws \LogicException
      * @throws \InvalidArgumentException
      */
-    protected function createPayload($messageId, $expiry, $token, $message)
+    protected function createPayload($messageId, $expiry, $token, $message, $priority)
     {
         if ($this->jsonUnescapedUnicode) {
             // Validate PHP version
@@ -346,8 +346,26 @@ class AppleNotificationHandler implements NotificationHandlerInterface
         }
 
         $token = preg_replace("/[^0-9A-Fa-f]/", "", $token);
-        $payload = chr(1) . pack("N", $messageId) . pack("N", $expiry) . pack("n", 32) . pack("H*", $token) . pack("n", strlen($jsonBody)) . $jsonBody;
+        $frame = chr(1)
+              . pack('n', 32)
+              . pack('H*', $token)
 
+              . chr(2)
+              . pack('n', strlen($jsonBody))
+              . $jsonBody
+
+              . chr(3)
+              . pack('n', 4)
+              . pack("N", $messageId)
+
+              . chr(4)
+              . pack('n', 4)
+              . pack('N', $expiry)
+
+              . chr(5)
+              . pack('n', 1)
+              . ($priority === 10 ? chr(10) : chr(5));
+        $payload = chr(2).pack("N", strlen($frame)).$frame;
         return $payload;
     }
 

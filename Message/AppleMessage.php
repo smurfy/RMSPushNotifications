@@ -37,6 +37,22 @@ class AppleMessage implements MessageInterface
     protected $expiry = 0;
 
     /**
+     * Message Priority
+     * The notification’s priority. Provide one of the following values:
+     *
+     * 10 The push message is sent immediately.
+     * The remote notification must trigger an alert, sound, or badge on the device.
+     * It is an error to use this priority for a push that contains only the content-available key.
+     *
+     * 5 The push message is sent at a time that conserves power on the device receiving it.
+     * Notifications with this priority might be grouped and delivered in bursts.
+     * They are throttled, and in some cases are not delivered.
+     *
+     * @var int
+     */
+    protected $priority = 10;
+
+    /**
      * Device push magic token
      *
      * @var string
@@ -219,6 +235,26 @@ class AppleMessage implements MessageInterface
     public function setCategory($category)
     {
         $this->apsBody["aps"]["category"] = $category;
+    }
+
+    /**
+     * Set priority of message
+     *
+     * @param int $expiry
+     */
+    public function setPriority($priority)
+    {
+        $this->priority = $priority;
+    }
+
+    /**
+     * Get priority of message
+     *
+     * @return int
+     */
+    public function getPriority()
+    {
+        return $this->priority;
     }
 
     /**
